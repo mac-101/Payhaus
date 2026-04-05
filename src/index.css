@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.font {
+  font-family: "Public Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.roboto-font {
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: italic;
+  font-variation-settings:
+    "wdth" 100;
+}
+
+/* Container Fixes */
+.modern-calendar-wrapper .react-calendar {
+  width: 100%;
+  border: none;
+  font-family: inherit;
+}
+
+/* Header/Navigation Styling */
+.modern-calendar-wrapper .react-calendar__navigation {
+  display: flex;
+  margin-bottom: 1rem;
+  height: 44px;
+}
+
+.modern-calendar-wrapper .react-calendar__navigation button {
+  min-width: 44px;
+  background: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  color: #111827;
+  /* gray-900 */
+}
+
+.modern-calendar-wrapper .react-calendar__navigation button:hover {
+  background-color: #f9fafb !important;
+}
+
+/* Weekday Labels (Su, Mo, Tu...) */
+.modern-calendar-wrapper .react-calendar__month-view__weekdays {
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 800;
+  font-size: 10px;
+  color: #9ca3af;
+  /* gray-400 */
+  padding-bottom: 10px;
+}
+
+.modern-calendar-wrapper .react-calendar__month-view__weekdays abbr {
+  text-decoration: none;
+}
+
+/* Day Tiles */
+.modern-calendar-wrapper .react-calendar__tile {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-center: center;
+  background: none;
+  font-size: 14px;
+  border: 1px solid #f3f4f6 !important;
+  /* light grid lines */
+  transition: all 0.2s;
+}
+
+/* Hover Effect */
+.modern-calendar-wrapper .react-calendar__tile:enabled:hover,
+.modern-calendar-wrapper .react-calendar__tile:enabled:focus {
+  background-color: #eff6ff !important;
+  /* blue-50 */
+  color: #2563eb !important;
+  /* blue-600 */
+}
+
+/* Selected Day Style (Square, Bold) */
+.modern-calendar-wrapper .react-calendar__tile--active {
+  background: #111827 !important;
+  /* gray-900 */
+  color: white !important;
+  font-weight: 800;
+  border: 1px solid #111827 !important;
+}
+
+/* Today Highlight */
+.modern-calendar-wrapper .react-calendar__tile--now {
+  background: #f3f4f6;
+  color: #2563eb;
+  font-weight: bold;
+}
+
+/* Remove outside month days if you want a cleaner look */
+.modern-calendar-wrapper .react-calendar__month-view__days__day--neighboringMonth {
+  color: #e5e7eb !important;
+}
+
+.scrollUP {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.scrollDOWN {
+  animation: scrollDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.zoomIN {
+  animation: zoomIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes scrollDown {
+  0% {
+    transform: translateY(-100%);
+    /* Start off-screen */
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    /* End at the defined position */
+    opacity: 1;
+  }
+}
+
+
+
+
+
+
+
+/* Base state for all elements using the scroll observer */
+.reveal {
+  opacity: 0;
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
+}
+
+/* --- FADE ANIMATIONS --- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* --- ROTATE & ENTRANCE --- */
+@keyframes rotateInUp {
+  from { 
+    opacity: 0; 
+    transform: rotate(-15deg) translateY(40px); 
+    transform-origin: left bottom;
+  }
+  to { 
+    opacity: 1; 
+    transform: rotate(0deg) translateY(0); 
+  }
+}
+
+@keyframes rotateInDown {
+  from { 
+    opacity: 0; 
+    transform: rotate(15deg) translateY(-40px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: rotate(0deg) translateY(0); 
+  }
+}
+
+/* --- SCALE & ZOOM --- */
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.5); }
+  70% { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* --- TRIGGER CLASSES --- */
+.fade-up { animation-name: fadeInUp; }
+.fade-right { animation-name: fadeInRight; }
+.fade-left { animation-name: fadeInLeft; }
+.rotate-up { animation-name: rotateInUp; }
+.rotate-down { animation-name: rotateInDown; }
+.zoom-in { animation-name: zoomIn; }
+.pop-in { animation-name: popIn; }
