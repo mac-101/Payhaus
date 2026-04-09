@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import Home from "./pages/home"
 import Property from "./Pages/property.jsx"
 import PayhausAuth from "./Pages/auth.jsx"
 import AppLayout from "./components/appLayout.jsx"
@@ -7,6 +6,8 @@ import TenantHome from "./tenantPage/home.jsx"
 import TenantBillsPage from "./tenantPage/TenantBillsPage.jsx"
 import { useAuth } from "./contexts/AuthContext.jsx"
 import { Loader } from "lucide-react"
+import Home from "./Pages/startingHome.jsx"
+
 
 function AppContent() {
   const { role, loading } = useAuth()
