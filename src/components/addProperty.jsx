@@ -121,6 +121,7 @@ export default function AddProperty({ isOpen, onClose }) {
       // Generate unique complex ID
       const complexId = push(ref(db, 'complexes')).key
       
+
       // Create complex data structure
       const complexData = {
         id: complexId,

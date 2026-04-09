@@ -26,7 +26,7 @@ function RecentBills() {
     // Show all bills, sorted by priority (rent first)
     // Show only unpaid bills (amount > 0), sorted by priority (rent first)
     const displayBills = allBills
-        .filter(bill => (bill.amount || 0) > 0) // <--- Add this line
+        .filter(bill => (bill.current || 0) > 0) // <--- Add this line
         .sort((a, b) => {
             const aIsRent = a.description?.toLowerCase().includes('rent') || a.category?.toLowerCase() === 'rent'
             const bIsRent = b.description?.toLowerCase().includes('rent') || b.category?.toLowerCase() === 'rent'
@@ -52,21 +52,13 @@ function RecentBills() {
     }
 
     const handlePaySelected = () => {
-        if (selectedBills.length === 1) {
-            const bill = displayBills.find(b => b.id === selectedBills[0])
-            if (bill) {
-                setSelectedBillForPayment(bill)
-                setPaymentModalOpen(true)
-            }
-        } else {
-            // Handle multiple bill payments - for now, open modal for first selected bill
-            const bill = displayBills.find(b => b.id === selectedBills[0])
-            if (bill) {
-                setSelectedBillForPayment(bill)
-                setPaymentModalOpen(true)
-            }
-        }
+    // Filter the actual bill objects that match the selected IDs
+    const billsToPay = displayBills.filter(b => selectedBills.includes(b.id));
+    if (billsToPay.length > 0) {
+        setSelectedBillForPayment(billsToPay); // Pass the whole array!
+        setPaymentModalOpen(true);
     }
+}
 
     const handlePayAll = () => {
         // For now, pay the first bill. In future, could implement bulk payment
@@ -87,7 +79,7 @@ function RecentBills() {
 
     const totalSelectedAmount = displayBills
         .filter(bill => selectedBills.includes(bill.id))
-        .reduce((sum, bill) => sum + (bill.amount || 0), 0)
+        .reduce((sum, bill) => sum + (bill.current || 0), 0)
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -118,7 +110,7 @@ function RecentBills() {
                         {displayBills.map((bill) => {
                             const isRent = bill.description?.toLowerCase().includes('rent') ||
                                 bill.category?.toLowerCase() === 'rent'
-                            const amount = bill.amount || 0
+                            const amount = bill.current || 0
                             const isSelected = selectedBills.includes(bill.id)
 
                             return (

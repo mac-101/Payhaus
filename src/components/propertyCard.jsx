@@ -16,9 +16,9 @@ export default function PropertyCard({ complex }) {
   const [endTenancyUnitId, setEndTenancyUnitId] = useState(null)
   const [addBillOpen, setAddBillOpen] = useState(false)
   const [openUnitMenuId, setOpenUnitMenuId] = useState(null)
-  
+  const [expandBillList, setExpandBillList] = useState(false)
   const units = complex.units ? Object.entries(complex.units) : []
-  const bills = complex.bills ? Object.entries(complex.bills) : []
+  const stats = complex.stats ? Object.entries(complex.stats) : []
 
   const handleEditBilling = (unitId) => {
     setEditBillingUnitId(unitId)
@@ -38,7 +38,7 @@ export default function PropertyCard({ complex }) {
   return (
     <div className="bg-white border border-gray-200 mb-4">
       {/* Complex Header */}
-      <div 
+      <div
         className="p-6 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors flex justify-between items-center"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -46,7 +46,7 @@ export default function PropertyCard({ complex }) {
           <Building2 size={24} className="text-blue-600" />
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{complex.name}</h3>
-            <p className="text-sm text-gray-600">{units.length} units • {bills?.length || 0} bills</p>
+            <p className="text-sm text-gray-600">{units.length} units • {stats?.length || 0} bills</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -69,19 +69,59 @@ export default function PropertyCard({ complex }) {
         <div className="p-6 space-y-6 max-h-[calc(100vh-300px)] overflow-y-auto">
           {/* Bills Section */}
           <div>
-            <div className="flex justify-between items-center mb-4">
+            <div onClick={() => setExpandBillList(!expandBillList)} className="flex p-2 justify-between items-center mb-4 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
               <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <FileText size={18} className="text-blue-600" />
+                <FileText size={18} />
                 Bills
+
+                {expandBillList ? (
+                  <ChevronUp size={20} className="text-gray-400" />
+                ) : (
+                  <ChevronDown size={20} className="text-gray-400" />
+                )}
               </h4>
               <button
                 onClick={() => setAddBillOpen(true)}
-                className="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 font-medium"
+                className="text-xs px-3 py-1 bg-blue-600 text-white rounded font-medium"
               >
                 + Add Bill
               </button>
             </div>
-            
+
+            {expandBillList && (<div className="space-y-2">
+              {stats.map(([billId, data]) => {
+                // Basic check to ensure we're looking at a bill object
+                if (!data || typeof data !== 'object') return null;
+
+                return (
+                  <div key={billId} className="p-3 border border-gray-200 bg-white rounded">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm font-bold text-gray-800">{data.description}</span>
+                      <span className="text-[10px] font-mono text-gray-400 uppercase">{billId.slice(-6)}</span>
+                    </div>
+
+                    <div className="flex gap-4 border-t pt-2">
+                      <div className="flex-1">
+                        <p className="text-[10px] text-gray-400 uppercase">Bill</p>
+                        <p className="text-sm font-semibold">${data.amount?.toLocaleString()}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] text-gray-400 uppercase">Paid</p>
+                        <p className="text-sm font-semibold text-green-600">${data.totalPaid?.toLocaleString()}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] text-gray-400 uppercase">Unpaid</p>
+                        <p className="text-sm font-semibold text-red-600">${data.unpaid?.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {stats.length === 0 && (
+                <p className="text-center py-4 text-xs text-gray-400 italic">No bill data available.</p>
+              )}
+            </div>)}
           </div>
 
           {/* Units Section */}

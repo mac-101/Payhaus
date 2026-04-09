@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { X, FileText, DollarSign, AlertCircle, CheckCircle } from 'lucide-react'
 import { usePropertyStore } from '../contexts/zustandFetch'
 // --- IMPORT FIREBASE REFS ---
-import { ref, push, update } from 'firebase/database' 
+import { ref, push, update, increment } from 'firebase/database'
 import { db } from '../../firebase.config' // Adjust this path to your firebase config file
 
 export default function AddBillModal({ isOpen, onClose, complexId, complexName }) {
@@ -15,11 +15,11 @@ export default function AddBillModal({ isOpen, onClose, complexId, complexName }
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  
+
   const { complexes } = usePropertyStore()
 
   const billCategories = [
-    'Maintenance', 'Utilities', 'Insurance', 'Property Tax', 
+    'Maintenance', 'Utilities', 'Insurance', 'Property Tax',
     'Security', 'Cleaning', 'Repairs', 'Other'
   ]
 
@@ -37,6 +37,7 @@ export default function AddBillModal({ isOpen, onClose, complexId, complexName }
     const currentComplex = complexes.find(c => c.id === complexId)
     const unitsObj = currentComplex?.units || {}
     const unitIds = Object.keys(unitsObj)
+    const totalNewDebt = parseFloat(formData.amount) * unitIds.length;
 
     if (unitIds.length === 0) {
       setError('No units found in this complex to bill.')
@@ -51,35 +52,42 @@ export default function AddBillModal({ isOpen, onClose, complexId, complexName }
     setLoading(true)
 
     try {
-      const billData = {
-        description: formData.description,
-        amount: parseFloat(formData.amount),
-        dueDate: formData.dueDate,
-        category: formData.category,
-        paid: false,
-        createdAt: new Date().toISOString(),
-      };
+      const billAmount = parseFloat(formData.amount);
+      const unitIds = Object.keys(unitsObj);
+      const totalAmountForComplex = billAmount * unitIds.length;
+
+      // Generate ONE key to rule them all (this links the units to the stat)
+      const commonBillId = push(ref(db, `complexes/${complexId}/stats`)).key;
 
       const updates = {};
 
-      // 2. Build the multi-path update object
+      // 1. Distribute to Units using the SAME ID
       unitIds.forEach((unitId) => {
-        // Generate a unique key for the bill in each unit
-        const newBillKey = push(ref(db, `complexes/${complexId}/units/${unitId}/bills`)).key;
-
-        // Map the bill data to the specific unit's bill collection
-        updates[`complexes/${complexId}/units/${unitId}/bills/${newBillKey}`] = {
-          ...billData,
-          id: newBillKey
+        updates[`complexes/${complexId}/units/${unitId}/bills/${commonBillId}`] = {
+          description: formData.description,
+          amount: billAmount,
+          current: billAmount, // Starts as full amount
+          dueDate: formData.dueDate,
+          category: formData.category,
+          paid: false,
+          id: commonBillId // Use the common ID
         };
       });
 
-      // 3. Execute the atomic update
-      // This ensures we don't overwrite the existing unit data (rent, name, etc.)
+      // 2. Create the Specific Stat Object
+      updates[`complexes/${complexId}/stats/${commonBillId}`] = {
+        description: formData.description,
+        amount: billAmount,
+        Total: totalAmountForComplex,
+        totalPaid: 0,
+        unpaid: totalAmountForComplex,
+        lastUpdated: Date.now()
+      };
+
       await update(ref(db), updates);
 
       setSuccess(`Bill successfully added to ${unitIds.length} units!`)
-      
+
       setTimeout(() => {
         setFormData({
           description: '',
