@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import Home from "./pages/Home.jsx"
+import Home from "./pages/home"
 import Property from "./Pages/property.jsx"
 import PayhausAuth from "./Pages/auth.jsx"
 import AppLayout from "./components/appLayout.jsx"
