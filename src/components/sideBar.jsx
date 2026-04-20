@@ -14,16 +14,28 @@ export default function SideBar() {
 
 
     const handleLogout = async () => {
-        // 1. Stop real-time Firebase listeners
-        stopPropertyListener();
-        clearTenantAccess();
+    console.log("1. Logout clicked");
+    try {
+        if (typeof stopPropertyListener === 'function') {
+            stopPropertyListener();
+            console.log("2. Property listener stopped");
+        }
+        
+        if (typeof clearTenantAccess === 'function') {
+            clearTenantAccess();
+            console.log("3. Tenant access cleared");
+        }
 
-        // 2. Sign out from Firebase Auth
-        await logout();
-
-        // 3. Redirect to login
-        navigate("/login");
-    };
+        console.log("4. Calling Firebase signOut...");
+        await logout(); 
+        
+        console.log("5. SignOut successful, navigating...");
+        navigate("/auth"); 
+    } catch (err) {
+        console.error("Logout Error Trace:", err);
+        alert("Failed to log out: " + err.message);
+    }
+};
 
     const NAVIGATION = [
         { id: "dashboard", label: "Overview", Icon: HomeIcon, path: "/" },
