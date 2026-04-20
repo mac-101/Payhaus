@@ -10,6 +10,7 @@ import { useAuth } from "./contexts/AuthContext.jsx"
 import { Loader } from "lucide-react"
 import Home from "./Pages/startingHome.jsx"
 import AppRoutes from "./contexts//AppRoutes.jsx"
+import { Navigate } from "react-router-dom"
 
 function AppContent() {
   const { role, loading, user } = useAuth()
