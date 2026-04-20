@@ -306,39 +306,46 @@ const HowItWorks = () => {
   );
 };
 
+
 const Pricing = () => {
   const plans = [
     {
       name: 'STARTER',
-      price: '0',
-      period: 'Up to 5 Tenants',
+      price: '1,000',
+      yearlyPrice: '10,000',
+      description: 'For first-time landlords',
+      period: 'Up to 3 Houses',
       features: [
-        'WhatsApp Reminders',
-        'Basic Rent Tracking',
+        'Auto WhatsApp Reminders',
         'Digital Receipts',
+        'Basic Rent Tracking',
         'Community Support'
       ],
-      cta: 'Get Started',
+      cta: 'Start Free Trial',
       popular: false
     },
     {
       name: 'LANDLORD',
-      price: '3,000',
-      period: 'Up to 50 Tenants',
+      price: '3,500',
+      yearlyPrice: '35,000',
+      description: 'For serious landlords',
+      period: 'Up to 15 Houses',
       features: [
         'Everything in Starter',
-        'Expense Management',
-        'Document Storage',
+        'Expense Tracking',
+        'Document Storage (Lease, ID)',
         'Maintenance Ticketing',
         'Priority WhatsApp Support'
       ],
-      cta: 'Start Free',
+      cta: 'Start Free Trial',
       popular: true
     },
     {
       name: 'ESTATE',
-      price: '10,000',
-      period: 'Unlimited Tenants',
+      price: '15,000',
+      yearlyPrice: '150,000',
+      description: 'For estate managers & developers',
+      period: 'Up to 100 Houses',
       features: [
         'Everything in Landlord',
         'Multi-Admin Access',
@@ -346,48 +353,89 @@ const Pricing = () => {
         'API Integrations',
         'Dedicated Account Manager'
       ],
-      cta: 'Get Started',
+      cta: 'Start Free Trial',
       popular: false
+    },
+    {
+      name: 'CUSTOM',
+      price: 'Custom',
+      description: 'For 100+ Houses',
+      period: 'Tailored Solutions',
+      features: [
+        'Everything in Estate',
+        'Custom pricing per house',
+        'On-site training',
+        'SLAs'
+      ],
+      cta: 'Talk to Sales',
+      popular: false,
+      isContact: true
     }
   ];
 
   return (
     <section id="pricing" className="py-24 px-6 bg-blue-50/30">
       <div className="max-w-7xl mx-auto text-center space-y-4 mb-16">
-        <h2 className="text-4xl font-bold tracking-tight text-blue-950 font-display">Free To Start. Pay When You Grow.</h2>
+        <h2 className="text-4xl font-bold tracking-tight text-blue-950 font-display">
+          14-Day Free Trial. No Card Needed.
+        </h2>
         <p className="text-gray-500 text-lg">Simple, transparent pricing built for landlords of all sizes.</p>
       </div>
-      <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+
+      <div className="max-w-[1400px] mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {plans.map((p, i) => (
           <div 
             key={i} 
-            className={`relative p-10 bg-white rounded-3xl border transition-all duration-300 ${p.popular ? 'border-blue-600 shadow-2xl scale-105 z-10' : 'border-blue-50 shadow-sm'} space-y-8 flex flex-col`}
+            className={`relative p-8 bg-white rounded-3xl border transition-all duration-300 ${
+              p.popular ? 'border-blue-600 shadow-2xl scale-105 z-10' : 'border-blue-50 shadow-sm hover:shadow-md'
+            } flex flex-col`}
           >
             {p.popular && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold py-1 px-4 rounded-full uppercase tracking-widest">
                 Most Popular
               </div>
             )}
-            <div className="text-center space-y-2">
+
+            <div className="text-center mb-8">
               <h3 className="text-sm font-bold text-blue-400 tracking-widest uppercase">{p.name}</h3>
-              <div className="flex items-center justify-center gap-1">
-                <span className="text-3xl font-bold text-blue-900">₦</span>
-                <span className="text-5xl font-bold tracking-tighter text-blue-900">{p.price}</span>
+              
+              <div className="mt-4 mb-2">
+                {p.isContact ? (
+                  <span className="text-3xl font-bold text-blue-900">Contact Us</span>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1">
+                      <span className="text-2xl font-bold text-blue-900">₦</span>
+                      <span className="text-4xl font-bold tracking-tighter text-blue-900">{p.price}</span>
+                      <span className="text-sm font-medium text-gray-400">/mo</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-blue-600 mt-1 uppercase tracking-tighter">
+                      or ₦{p.yearlyPrice} / year
+                    </p>
+                  </div>
+                )}
               </div>
-              <p className="text-xs font-semibold text-gray-400 tracking-wide uppercase">/ month</p>
-              <p className="text-sm font-medium text-gray-500 mt-2">{p.period}</p>
+              
+              <p className="text-sm font-bold text-gray-800">{p.period}</p>
+              <p className="text-xs font-medium text-gray-500 mt-1 italic">{p.description}</p>
             </div>
-            <div className="space-y-4 flex-1">
+
+            <div className="space-y-4 flex-1 mb-8">
               {p.features.map((f, fi) => (
                 <div key={fi} className="flex items-start gap-3">
                   <div className="w-5 h-5 bg-blue-50 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                     <Check className="w-3 h-3 text-blue-600" />
                   </div>
-                  <span className="text-sm text-gray-600 font-medium">{f}</span>
+                  <span className="text-sm text-gray-600 font-medium leading-tight">{f}</span>
                 </div>
               ))}
             </div>
-            <button className={`w-full py-4 rounded-xl font-bold transition-all ${p.popular ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-100' : 'bg-blue-50 text-blue-900 hover:bg-blue-100'}`}>
+
+            <button className={`w-full py-4 rounded-xl font-bold transition-all ${
+              p.popular 
+                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-100' 
+                : 'bg-blue-50 text-blue-900 hover:bg-blue-100'
+            }`}>
               {p.cta}
             </button>
           </div>
@@ -396,6 +444,7 @@ const Pricing = () => {
     </section>
   );
 };
+
 
 const FinalCTA = () => (
   <section className="py-24 px-6">
