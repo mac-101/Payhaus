@@ -5,6 +5,9 @@ import { ref, get } from 'firebase/database';
 
 const AuthContext = createContext();
 
+
+
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [uid, setUid] = useState(null);
@@ -12,6 +15,8 @@ export function AuthProvider({ children }) {
   const [fullName, setFullName] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  
 
   useEffect(() => {
     // Listen to Firebase auth state changes
@@ -56,6 +61,7 @@ export function AuthProvider({ children }) {
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
+  
 
   const value = {
     user,

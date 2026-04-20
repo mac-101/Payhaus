@@ -54,20 +54,10 @@ function PaymentModal({ isOpen, onClose, bills, onPaymentComplete }) {
         if (billsArray.length === 0 || !user || !unit || !complex) return;
 
         const amount = parseFloat(paymentAmount);
+        const landlordId = complex.landlordUID || complex.ownerId; // Using your established landlord ID field
 
-        if (amount > (totalDue + 0.01)) {
-            setError('Payment amount cannot exceed total due');
-            setLoading(false); // Make sure loading stops
-            return;
-        }
-
-        if (isNaN(amount) || amount <= 0) {
+        if (isNaN(amount) || amount <= 0 || amount > (totalDue + 0.01)) {
             setError('Please enter a valid payment amount');
-            return;
-        }
-
-        if (amount > (totalDue + 0.01)) {
-            setError('Payment amount cannot exceed total due');
             return;
         }
 
@@ -82,7 +72,7 @@ function PaymentModal({ isOpen, onClose, bills, onPaymentComplete }) {
                 isRent: b.description?.toLowerCase().includes('rent') || b.id === 'rent'
             }));
 
-            // Logic to deduct from bills
+            // Calculate deductions
             for (let i = 0; i < billsArray.length && remaining > 0; i++) {
                 const bill = billsArray[i];
                 const billVal = parseFloat(bill.current || 0);
@@ -92,11 +82,14 @@ function PaymentModal({ isOpen, onClose, bills, onPaymentComplete }) {
                 bill.current = billVal - pay;
             }
 
+            // 1. Generate Transaction Key
             const transactionRef = push(ref(db, 'transactions'));
+            const transactionId = transactionRef.key;
+
             const transaction = {
-                id: transactionRef.key,
+                id: transactionId,
                 tenantId: user.uid,
-                landlordId: complex.landlordId || 'landlord-1',
+                landlordId: landlordId,
                 unitId: unitId,
                 complexId: complex.id,
                 amount: amount,
@@ -107,42 +100,48 @@ function PaymentModal({ isOpen, onClose, bills, onPaymentComplete }) {
                 status: 'completed'
             };
 
-            await set(transactionRef, transaction);
+            // 2. Prepare Multi-Path Update Object
+            const updates = {};
+            
+            // Save the main transaction data
+            updates[`transactions/${transactionId}`] = transaction;
 
-            // Update Database
+            // Save transaction ID to Tenant's history
+            updates[`users/${user.uid}/transactions/${transactionId}`] = true;
+
+            // Save transaction ID to Landlord's history
+            if (landlordId) {
+                updates[`users/${landlordId}/transactions/${transactionId}`] = true;
+            }
+
+            // 3. Handle Bill Updates and Stats in the same update object
             for (let i = 0; i < billsArray.length; i++) {
                 const bill = billsArray[i];
                 const paymentApplied = billsPaid[i].amountPaid;
 
-                if (paymentApplied <= 0) continue; // Skip if no money went to this bill
+                if (paymentApplied <= 0) continue;
 
                 const billPath = unit.bills?.[bill.id]
                     ? `complexes/${complex.id}/units/${unitId}/bills/${bill.id}`
                     : `complexes/${complex.id}/bills/${bill.id}`;
 
-                const updateData = { current: bill.current };
-                if (bill.current <= 0) updateData.paid = true;
+                updates[`${billPath}/current`] = bill.current;
+                if (bill.current <= 0) updates[`${billPath}/paid`] = true;
 
-                // A) Update the specific bill in the unit
-                await updateDB(ref(db, billPath), updateData);
-
-                // B) Update the MASTER STATS for the landlord
+                // Update Master Stats
                 const statsPath = `complexes/${complex.id}/stats/${bill.id}`;
-                const statsUpdate = {
-                    [`${statsPath}/totalPaid`]: increment(paymentApplied),
-                    [`${statsPath}/unpaid`]: increment(-paymentApplied),
-                    [`${statsPath}/lastUpdated`]: Date.now()
-                };
+                updates[`${statsPath}/totalPaid`] = increment(paymentApplied);
+                updates[`${statsPath}/unpaid`] = increment(-paymentApplied);
+                updates[`${statsPath}/lastUpdated`] = Date.now();
 
-                await updateDB(ref(db), statsUpdate);
-
-                // C) Update rentBalance if applicable
+                // Update unit rentBalance if it was a rent payment
                 if (billsPaid[i].isRent) {
-                    await updateDB(ref(db, `complexes/${complex.id}/units/${unitId}`), {
-                        rentBalance: bill.current
-                    });
+                    updates[`complexes/${complex.id}/units/${unitId}/rentBalance`] = bill.current;
                 }
             }
+
+            // 4. EXECUTE ALL UPDATES AT ONCE (Atomic)
+            await updateDB(ref(db), updates);
 
             onPaymentComplete?.(transaction);
             onClose();

@@ -4,6 +4,7 @@ import PayhausAuth from "./Pages/auth.jsx"
 import AppLayout from "./components/appLayout.jsx"
 import TenantHome from "./tenantPage/home.jsx"
 import TenantBillsPage from "./tenantPage/TenantBillsPage.jsx"
+import TenantPage from "./Pages/tenantPage.jsx"
 import { useAuth } from "./contexts/AuthContext.jsx"
 import { Loader } from "lucide-react"
 import Home from "./Pages/startingHome.jsx"
@@ -38,6 +39,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/property" element={<Property />} />
+            <Route path="/people" element={<TenantPage />} />
           </Routes>
         </AppLayout>
       } />

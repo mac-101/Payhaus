@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Building2, Users, DollarSign, AlertCircle, Loader2 } from 'lucide-react'
+import { Building2, Users, DollarSign, AlertCircle, Loader2, Home, CheckCircle2, XCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { usePropertyStore } from '../contexts/zustandFetch'
 
@@ -13,56 +13,69 @@ export default function Stats() {
         }
     }, [uid, complexes.length, fetchUserComplexes])
 
-    const totalProperties = complexes.length
-    const totalTenants = complexes.reduce((count, complex) => {
-        const units = complex.units || {}
-        return count + Object.values(units).filter((unit) => unit?.currentTenantUID).length
-    }, 0)
-    const rentalIncome = complexes.reduce((sum, complex) => {
-        const units = complex.units || {}
-        return (
-            sum + Object.values(units).reduce((unitSum, unit) => {
-                return unitSum + (parseFloat(unit.monthlyRent) || 0)
-            }, 0)
-        )
-    }, 0)
-    const pendingPayment = complexes.reduce((sum, complex) => {
-        const complexBills = complex.bills || {}
-        return (
-            sum + Object.values(complexBills).reduce((billSum, bill) => {
-                if (!bill) return billSum
-                const isPaid = bill.paid === true || bill.paid === 'true'
-                return billSum + (isPaid ? 0 : (parseFloat(bill.amount) || 0))
-            }, 0)
-        )
+    const totalComplexes = complexes.length
+
+    const allUnits = complexes.flatMap(complex => Object.values(complex.units || {}));
+
+    const totalUnits = allUnits.length
+    const occupiedUnits = allUnits.filter(unit => unit?.currentTenantUID).length
+    const vacantUnits = totalUnits - occupiedUnits
+
+    const rentalIncome = allUnits.reduce((sum, unit) => sum + (parseFloat(unit.monthlyRent) || 0), 0)
+    const pendingPayment = allUnits.reduce((sum, unit) => sum + (parseFloat(unit.rentBalance) || 0), 0)
+    const rentPaid = allUnits.reduce((sum, unit) => {
+        const total = parseFloat(unit.monthlyRent) || 0;
+        const balance = parseFloat(unit.rentBalance) || 0;
+        return sum + Math.max(0, total - balance);
     }, 0)
 
     const stats = [
         {
-            label: 'Total Properties',
-            value: totalProperties,
-            description: 'Active complexes',
+            label: 'Total Complexes',
+            value: totalComplexes,
+            description: 'Properties owned',
             Icon: Building2,
             color: 'blue',
         },
         {
-            label: 'Total Tenants',
-            value: totalTenants,
-            description: 'Occupied units',
-            Icon: Users,
+            label: 'Total Units',
+            value: totalUnits,
+            description: 'Across all complexes',
+            Icon: Home,
+            color: 'blue',
+        },
+        {
+            label: 'Occupied',
+            value: occupiedUnits,
+            description: 'Currently rented',
+            Icon: CheckCircle2,
             color: 'green',
         },
         {
-            label: 'Rental Income',
+            label: 'Vacant',
+            value: vacantUnits,
+            description: 'Available units',
+            Icon: XCircle,
+            color: 'orange',
+        },
+        {
+            label: 'Total Income',
             value: `$${rentalIncome.toLocaleString()}`,
-            description: 'Monthly rent total',
+            description: 'Potential monthly',
             Icon: DollarSign,
             color: 'emerald',
         },
         {
-            label: 'Pending Payment',
+            label: 'Rent Paid',
+            value: `$${rentPaid.toLocaleString()}`,
+            description: 'Collected this month',
+            Icon: DollarSign,
+            color: 'green',
+        },
+        {
+            label: 'Unpaid Rent',
             value: `$${pendingPayment.toLocaleString()}`,
-            description: 'Unpaid bills',
+            description: 'Total outstanding',
             Icon: AlertCircle,
             color: 'orange',
         },
