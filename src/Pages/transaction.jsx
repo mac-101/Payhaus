@@ -4,7 +4,7 @@ import { useTransactionStore } from "../contexts/transactionStore";
 import { TransactionCard } from "../components/transactionCard";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ReceiptView } from "../components/receiptView";
+import { ReceiptView } from "../components/ReceiptView";
 
 export default function TransactionsPage() {
     const { uid } = useAuth();
