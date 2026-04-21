@@ -51,107 +51,112 @@ function PaymentModal({ isOpen, onClose, bills, onPaymentComplete }) {
     }
 
     const handlePayment = async () => {
-        if (billsArray.length === 0 || !user || !unit || !complex) return;
+    if (billsArray.length === 0 || !user || !unit || !complex) return;
 
-        const amount = parseFloat(paymentAmount);
-        const landlordId = complex.landlordUID || complex.ownerId; // Using your established landlord ID field
+    const amount = parseFloat(paymentAmount);
+    const landlordId = complex.landlordUID || complex.ownerId;
 
-        if (isNaN(amount) || amount <= 0 || amount > (totalDue + 0.01)) {
-            setError('Please enter a valid payment amount');
-            return;
-        }
+    if (isNaN(amount) || amount <= 0 || amount > (totalDue + 0.01)) {
+        setError('Please enter a valid payment amount');
+        return;
+    }
 
-        setLoading(true);
-        setError('');
+    setLoading(true);
+    setError('');
 
-        try {
-            let remaining = amount;
-            const billsPaid = billsArray.map(b => ({
-                id: b.id,
-                amountPaid: 0,
-                isRent: b.description?.toLowerCase().includes('rent') || b.id === 'rent'
-            }));
+    try {
+        let remaining = amount;
+        
+        const billsPaid = billsArray.map(b => ({
+            id: b.id,
+            originalTotal: parseFloat(b.current || 0), // Store original to calculate status
+            amountPaid: 0,
+            isRent: b.description?.toLowerCase().includes('rent') || b.id === 'rent'
+        }));
 
-            // Calculate deductions
-            for (let i = 0; i < billsArray.length && remaining > 0; i++) {
-                const bill = billsArray[i];
-                const billVal = parseFloat(bill.current || 0);
-                const pay = Math.min(remaining, billVal);
-                billsPaid[i].amountPaid = pay;
-                remaining -= pay;
-                bill.current = billVal - pay;
-            }
-
-            // 1. Generate Transaction Key
-            const transactionRef = push(ref(db, 'transactions'));
-            const transactionId = transactionRef.key;
-
-            const transaction = {
-                id: transactionId,
-                tenantId: user.uid,
-                landlordId: landlordId,
-                unitId: unitId,
-                complexId: complex.id,
-                amount: amount,
-                type: 'bill',
-                description: `Payment for bills`,
-                billsPaid,
-                timestamp: Date.now(),
-                status: 'completed'
-            };
-
-            // 2. Prepare Multi-Path Update Object
-            const updates = {};
+        const updatedBills = [...billsArray];
+        for (let i = 0; i < updatedBills.length && remaining > 0; i++) {
+            const bill = updatedBills[i];
+            const billVal = parseFloat(bill.current || 0);
+            const pay = Math.min(remaining, billVal);
             
-            // Save the main transaction data
-            updates[`transactions/${transactionId}`] = transaction;
-
-            // Save transaction ID to Tenant's history
-            updates[`users/${user.uid}/transactions/${transactionId}`] = true;
-
-            // Save transaction ID to Landlord's history
-            if (landlordId) {
-                updates[`users/${landlordId}/transactions/${transactionId}`] = true;
-            }
-
-            // 3. Handle Bill Updates and Stats in the same update object
-            for (let i = 0; i < billsArray.length; i++) {
-                const bill = billsArray[i];
-                const paymentApplied = billsPaid[i].amountPaid;
-
-                if (paymentApplied <= 0) continue;
-
-                const billPath = unit.bills?.[bill.id]
-                    ? `complexes/${complex.id}/units/${unitId}/bills/${bill.id}`
-                    : `complexes/${complex.id}/bills/${bill.id}`;
-
-                updates[`${billPath}/current`] = bill.current;
-                if (bill.current <= 0) updates[`${billPath}/paid`] = true;
-
-                // Update Master Stats
-                const statsPath = `complexes/${complex.id}/stats/${bill.id}`;
-                updates[`${statsPath}/totalPaid`] = increment(paymentApplied);
-                updates[`${statsPath}/unpaid`] = increment(-paymentApplied);
-                updates[`${statsPath}/lastUpdated`] = Date.now();
-
-                // Update unit rentBalance if it was a rent payment
-                if (billsPaid[i].isRent) {
-                    updates[`complexes/${complex.id}/units/${unitId}/rentBalance`] = bill.current;
-                }
-            }
-
-            // 4. EXECUTE ALL UPDATES AT ONCE (Atomic)
-            await updateDB(ref(db), updates);
-
-            onPaymentComplete?.(transaction);
-            onClose();
-        } catch (err) {
-            console.error('Payment error:', err);
-            setError(err.message || 'Payment failed.');
-        } finally {
-            setLoading(false);
+            billsPaid[i].amountPaid = pay;
+            remaining -= pay;
+            bill.current = billVal - pay;
         }
-    };
+
+        const transactionRef = push(ref(db, 'transactions'));
+        const transactionId = transactionRef.key;
+
+        // --- NEW LOGIC: Calculate detailed status ---
+        const rentBill = billsPaid.find(b => b.isRent);
+        let dynamicStatus = 'completed'; // Default
+        let rentBalanceRemaining = 0;
+
+        if (rentBill && rentBill.amountPaid > 0) {
+            rentBalanceRemaining = rentBill.originalTotal - rentBill.amountPaid;
+            if (rentBalanceRemaining <= 0) {
+                dynamicStatus = 'Completed';
+            } else {
+                dynamicStatus = `₦${rentBalanceRemaining.toLocaleString()} Left`;
+            }
+        }
+
+        const transaction = {
+            id: transactionId,
+            tenantId: user.uid,
+            landlordId: landlordId,
+            unitId: unitId,
+            complexId: complex.id,
+            amount: amount,
+            type: rentBill && rentBill.amountPaid > 0 ? "Rent" : "Bills",
+            description: `Payment for ${rentBill && rentBill.amountPaid > 0 ? "Rent" : "Bills"}`,
+            billsPaid,
+            timestamp: Date.now(),
+            status: dynamicStatus, // This now holds the balance info
+            rentBalance: rentBalanceRemaining // Optional: save explicitly for easy access
+        };
+
+        const updates = {};
+        updates[`transactions/${transactionId}`] = transaction;
+        updates[`users/${user.uid}/transactions/${transactionId}`] = true;
+
+        if (landlordId) {
+            updates[`users/${landlordId}/transactions/${transactionId}`] = true;
+        }
+
+        for (let i = 0; i < updatedBills.length; i++) {
+            const bill = updatedBills[i];
+            const paymentApplied = billsPaid[i].amountPaid;
+            if (paymentApplied <= 0) continue;
+
+            const billPath = unit.bills?.[bill.id]
+                ? `complexes/${complex.id}/units/${unitId}/bills/${bill.id}`
+                : `complexes/${complex.id}/bills/${bill.id}`;
+
+            updates[`${billPath}/current`] = bill.current;
+            if (bill.current <= 0) updates[`${billPath}/paid`] = true;
+
+            const statsPath = `complexes/${complex.id}/stats/${bill.id}`;
+            updates[`${statsPath}/totalPaid`] = increment(paymentApplied);
+            updates[`${statsPath}/unpaid`] = increment(-paymentApplied);
+            updates[`${statsPath}/lastUpdated`] = Date.now();
+
+            if (billsPaid[i].isRent) {
+                updates[`complexes/${complex.id}/units/${unitId}/rentBalance`] = bill.current;
+            }
+        }
+
+        await updateDB(ref(db), updates);
+        onPaymentComplete?.(transaction);
+        onClose();
+    } catch (err) {
+        console.error('Payment error:', err);
+        setError(err.message || 'Payment failed.');
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

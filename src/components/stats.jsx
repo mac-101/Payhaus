@@ -31,6 +31,27 @@ export default function Stats() {
 
     const stats = [
         {
+            label: 'Total Income',
+            value: `$${rentalIncome.toLocaleString()}`,
+            description: 'Potential monthly',
+            Icon: DollarSign,
+            color: 'emerald',
+        },
+        {
+            label: 'Rent Paid',
+            value: `$${rentPaid.toLocaleString()}`,
+            description: 'Collected this month',
+            Icon: DollarSign,
+            color: 'green',
+        },
+        {
+            label: 'Unpaid Rent',
+            value: `$${pendingPayment.toLocaleString()}`,
+            description: 'Total outstanding',
+            Icon: AlertCircle,
+            color: 'orange',
+        },
+        {
             label: 'Total Complexes',
             value: totalComplexes,
             description: 'Properties owned',
@@ -58,27 +79,7 @@ export default function Stats() {
             Icon: XCircle,
             color: 'orange',
         },
-        {
-            label: 'Total Income',
-            value: `$${rentalIncome.toLocaleString()}`,
-            description: 'Potential monthly',
-            Icon: DollarSign,
-            color: 'emerald',
-        },
-        {
-            label: 'Rent Paid',
-            value: `$${rentPaid.toLocaleString()}`,
-            description: 'Collected this month',
-            Icon: DollarSign,
-            color: 'green',
-        },
-        {
-            label: 'Unpaid Rent',
-            value: `$${pendingPayment.toLocaleString()}`,
-            description: 'Total outstanding',
-            Icon: AlertCircle,
-            color: 'orange',
-        },
+        
     ]
 
     const colorMap = {

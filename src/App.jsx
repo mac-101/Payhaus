@@ -11,6 +11,9 @@ import { Loader } from "lucide-react"
 import Home from "./Pages/startingHome.jsx"
 import AppRoutes from "./contexts//AppRoutes.jsx"
 import { Navigate } from "react-router-dom"
+import Transactions from "./Pages/transaction.jsx"
+import TenantTransactionsPage from "./tenantPage/transaction.jsx"
+
 
 function AppContent() {
   const { role, loading, user } = useAuth()
@@ -36,6 +39,7 @@ function AppContent() {
           <>
             <Route path="/" element={<TenantHome />} />
             <Route path="/bills" element={<TenantBillsPage />} />
+            <Route path="/transactions" element={<TenantTransactionsPage />} />
           </>
         ) : (
           /* Landlord View */
@@ -45,6 +49,7 @@ function AppContent() {
                 <Route path="/" element={<Home />} />
                 <Route path="/property" element={<Property />} />
                 <Route path="/people" element={<TenantPage />} />
+                <Route path="/transactions" element={<Transactions />} />
               </Routes>
             </AppLayout>
           } />

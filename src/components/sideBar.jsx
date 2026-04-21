@@ -41,6 +41,7 @@ export default function SideBar() {
         { id: "dashboard", label: "Overview", Icon: HomeIcon, path: "/" },
         { id: "property", label: "Property", Icon: Building2Icon, path: "/property" },
         { id: "people", label: "People", Icon: Users2, path: "/people" },
+        { id: "transactions", label: "Transactions", Icon: LogOut, path: "/transactions" },
         // { id: "maintenance", label: "Maintenance", Icon: PaintRoller, path: "/maintenance" },
     ]
 
@@ -48,6 +49,7 @@ export default function SideBar() {
         if (location.pathname === "/") return "dashboard"
         if (location.pathname.startsWith("/property")) return "property"
         if (location.pathname.startsWith("/people")) return "people"
+        if (location.pathname.startsWith("/transactions")) return "transactions"
         if (location.pathname.startsWith("/maintenance")) return "maintenance"
         return "dashboard"
     }

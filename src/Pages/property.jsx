@@ -43,9 +43,8 @@ export default function Property() {
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center justify-center p-8">
-          <Loader size={24} className="text-blue-600 animate-spin mr-2" />
-          <span className="text-gray-600">Loading your properties...</span>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader size={24} className="text-blue-600 animate-spin" />
         </div>
       )}
 
@@ -70,7 +69,7 @@ export default function Property() {
       {!loading && complexes.length > 0 && (
         <div>
           <p className="text-sm font-semibold text-gray-600 mb-4">
-            Total: {complexes.length} complex{complexes.length !== 1 ? 'es' : ''} 
+            Total: {complexes.length} complex{complexes.length !== 1 ? 'es' : ''}
             ({complexes.reduce((sum, c) => sum + Object.keys(c.units || {}).length, 0)} units)
           </p>
           <div className="space-y-4">

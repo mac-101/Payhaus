@@ -8,7 +8,7 @@ function ActionButtons() {
     const actions = [
         { icon: Wrench, label: 'Request Maintenance', onClick: () => alert('Maintenance request coming soon'), color: 'bg-orange-500 hover:bg-orange-600' },
         { icon: FileText, label: 'Bills', onClick: () => navigate('/bills'), color: 'bg-blue-500 hover:bg-blue-600' },
-        { icon: History, label: 'Transaction History', onClick: () => alert('Transaction history coming soon'), color: 'bg-green-500 hover:bg-green-600' },
+        { icon: History, label: 'Transaction History', onClick: () => navigate('/transactions'), color: 'bg-green-500 hover:bg-green-600' },
     ]
 
     return (
