@@ -307,143 +307,134 @@ const HowItWorks = () => {
 };
 
 
+import { Link } from 'react-router-dom';
+
 const Pricing = () => {
   const plans = [
     {
+      id: 'starter',
       name: 'STARTER',
       price: '1,000',
       yearlyPrice: '10,000',
       description: 'For first-time landlords',
       period: 'Up to 3 Houses',
-      features: [
-        'Auto WhatsApp Reminders',
-        'Digital Receipts',
-        'Basic Rent Tracking',
-        'Community Support'
-      ],
+      features: ['Auto WhatsApp Reminders', 'Digital Receipts', 'Basic Rent Tracking', 'Community Support'],
       cta: 'Start Free Trial',
+      link: '/auth', // Redirect to auth for trial
       popular: false
     },
     {
+      id: 'landlord',
       name: 'LANDLORD',
       price: '3,500',
       yearlyPrice: '35,000',
       description: 'For serious landlords',
       period: 'Up to 15 Houses',
-      features: [
-        'Everything in Starter',
-        'Expense Tracking',
-        'Document Storage (Lease, ID)',
-        'Maintenance Ticketing',
-        'Priority WhatsApp Support'
-      ],
-      cta: 'Start Free Trial',
+      features: ['Everything in Starter', 'Expense Tracking', 'Document Storage', 'Maintenance Ticketing', 'Priority Support'],
+      cta: 'Go Pro',
+      link: '/checkout?plan=landlord', // Redirect to checkout
       popular: true
     },
     {
+      id: 'estate',
       name: 'ESTATE',
       price: '15,000',
       yearlyPrice: '150,000',
-      description: 'For estate managers & developers',
+      description: 'For estate managers',
       period: 'Up to 100 Houses',
-      features: [
-        'Everything in Landlord',
-        'Multi-Admin Access',
-        'Custom Branding',
-        'API Integrations',
-        'Dedicated Account Manager'
-      ],
-      cta: 'Start Free Trial',
+      features: ['Everything in Landlord', 'Multi-Admin Access', 'Custom Branding', 'API Integrations', 'Account Manager'],
+      cta: 'Go Estate',
+      link: '/checkout?plan=estate', // Redirect to checkout
       popular: false
     },
     {
+      id: 'custom',
       name: 'CUSTOM',
       price: 'Custom',
       description: 'For 100+ Houses',
       period: 'Tailored Solutions',
-      features: [
-        'Everything in Estate',
-        'Custom pricing per house',
-        'On-site training',
-        'SLAs'
-      ],
+      features: ['Everything in Estate', 'Custom pricing', 'On-site training', 'SLAs'],
       cta: 'Talk to Sales',
+      link: '/contact', // Redirect to contact
       popular: false,
       isContact: true
     }
   ];
 
   return (
-    <section id="pricing" className="py-24 px-6 bg-blue-50/30">
-      <div className="max-w-7xl mx-auto text-center space-y-4 mb-16">
-        <h2 className="text-4xl font-bold tracking-tight text-blue-950 font-display">
+    <section id="pricing" className="py-16 px-6 bg-blue-50/30">
+      <div className="max-w-3xl mx-auto text-center mb-10">
+        <h2 className="text-3xl font-bold tracking-tight text-blue-950">
           14-Day Free Trial. No Card Needed.
         </h2>
-        <p className="text-gray-500 text-lg">Simple, transparent pricing built for landlords of all sizes.</p>
+        <p className="text-gray-500 text-sm mt-2">Simple, transparent pricing built for landlords.</p>
       </div>
 
-      <div className="max-w-[1400px] mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {plans.map((p, i) => (
+      <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {plans.map((p) => (
           <div 
-            key={i} 
-            className={`relative p-8 bg-white rounded-3xl border transition-all duration-300 ${
-              p.popular ? 'border-blue-600 shadow-2xl scale-105 z-10' : 'border-blue-50 shadow-sm hover:shadow-md'
+            key={p.id} 
+            className={`relative p-5 bg-white rounded-2xl border transition-all duration-300 ${
+              p.popular ? 'border-blue-600 shadow-xl scale-105 z-10' : 'border-blue-50 shadow-sm'
             } flex flex-col`}
           >
             {p.popular && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold py-1 px-4 rounded-full uppercase tracking-widest">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[9px] font-bold py-1 px-3 rounded-full uppercase tracking-widest">
                 Most Popular
               </div>
             )}
 
-            <div className="text-center mb-8">
-              <h3 className="text-sm font-bold text-blue-400 tracking-widest uppercase">{p.name}</h3>
-              
-              <div className="mt-4 mb-2">
+            <div className="text-center mb-5">
+              <h3 className="text-[11px] font-bold text-blue-400 tracking-widest uppercase">{p.name}</h3>
+              <div className="my-2">
                 {p.isContact ? (
-                  <span className="text-3xl font-bold text-blue-900">Contact Us</span>
+                  <span className="text-xl font-bold text-blue-900">Contact Us</span>
                 ) : (
                   <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-1">
-                      <span className="text-2xl font-bold text-blue-900">₦</span>
-                      <span className="text-4xl font-bold tracking-tighter text-blue-900">{p.price}</span>
-                      <span className="text-sm font-medium text-gray-400">/mo</span>
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-lg font-bold text-blue-900">₦</span>
+                      <span className="text-3xl font-bold tracking-tighter text-blue-900">{p.price}</span>
+                      <span className="text-xs font-medium text-gray-400">/mo</span>
                     </div>
-                    <p className="text-[10px] font-bold text-blue-600 mt-1 uppercase tracking-tighter">
-                      or ₦{p.yearlyPrice} / year
+                    <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tighter">
+                      or ₦{p.yearlyPrice} / yr
                     </p>
                   </div>
                 )}
               </div>
-              
-              <p className="text-sm font-bold text-gray-800">{p.period}</p>
-              <p className="text-xs font-medium text-gray-500 mt-1 italic">{p.description}</p>
+              <p className="text-xs font-bold text-gray-800">{p.period}</p>
+              <p className="text-[11px] text-gray-500 mt-0.5 italic">{p.description}</p>
             </div>
 
-            <div className="space-y-4 flex-1 mb-8">
+            <div className="space-y-2.5 flex-1 mb-6">
               {p.features.map((f, fi) => (
-                <div key={fi} className="flex items-start gap-3">
-                  <div className="w-5 h-5 bg-blue-50 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3 h-3 text-blue-600" />
+                <div key={fi} className="flex items-start gap-2">
+                  <div className="w-4 h-4 bg-blue-50 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="w-2.5 h-2.5 text-blue-600" />
                   </div>
-                  <span className="text-sm text-gray-600 font-medium leading-tight">{f}</span>
+                  <span className="text-[12px] text-gray-600 font-medium leading-tight">{f}</span>
                 </div>
               ))}
             </div>
 
-            <button className={`w-full py-4 rounded-xl font-bold transition-all ${
-              p.popular 
-                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-100' 
-                : 'bg-blue-50 text-blue-900 hover:bg-blue-100'
-            }`}>
+            {/* Link component used as the button wrapper */}
+            <Link 
+              to={p.link}
+              className={`w-full py-2.5 rounded-lg text-sm font-bold text-center transition-all ${
+                p.popular 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'bg-blue-50 text-blue-900 hover:bg-blue-100'
+              }`}
+            >
               {p.cta}
-            </button>
+            </Link>
           </div>
         ))}
       </div>
     </section>
   );
 };
+
 
 
 const FinalCTA = () => (
