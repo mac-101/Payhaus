@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { db } from '../../firebase.config'
-import { ref, get as dbGet, set as setDB, onValue, off, serverTimestamp } from 'firebase/database'
+import { ref, get as dbGet, set as setDB, onValue, off, serverTimestamp, update } from 'firebase/database'
 
 export const useTenantStore = create((set, get) => ({
   accessCode: '',
@@ -15,6 +15,13 @@ export const useTenantStore = create((set, get) => ({
   error: null,
   unsubscribeComplex: null,
 
+  resetStore: () => set({
+    hasUnitAccess: false,
+    unit: null,
+    complex: null,
+    recentBill: null
+  }),
+
   fetchUnitByAccessCode: async (code, tenantUid) => {
     const normalizedCode = code?.trim()
 
@@ -28,7 +35,6 @@ export const useTenantStore = create((set, get) => ({
       return { success: false }
     }
 
-    // Clean up existing listener if one exists
     const currentUnsubscribe = get().unsubscribeComplex
     if (currentUnsubscribe) currentUnsubscribe()
 
@@ -45,7 +51,6 @@ export const useTenantStore = create((set, get) => ({
       const complexId = accessData.complexId
       const unitId = accessData.unitId
 
-      // Initial check to see if complex exists and get Landlord ID
       const complexSnapshot = await dbGet(ref(db, `complexes/${complexId}`))
       if (!complexSnapshot.exists()) {
         set({ loading: false, error: 'Complex not found' })
@@ -53,7 +58,7 @@ export const useTenantStore = create((set, get) => ({
       }
 
       const initialComplex = complexSnapshot.val()
-      const landlordId = initialComplex.landlordUID || initialComplex.ownerId; 
+      const landlordId = initialComplex.landlordUID || initialComplex.ownerId;
       const unit = initialComplex.units?.[unitId] ?? null
 
       if (!unit) {
@@ -61,6 +66,7 @@ export const useTenantStore = create((set, get) => ({
         return { success: false }
       }
 
+      // If unit is occupied by someone else, block access
       if (unit.currentTenantUID && unit.currentTenantUID !== tenantUid) {
         set({ loading: false, error: 'Unit already assigned' })
         return { success: false }
@@ -75,10 +81,19 @@ export const useTenantStore = create((set, get) => ({
         })
       }
 
-      // 2. Claim the unit
-      await setDB(ref(db, `complexes/${complexId}/units/${unitId}/currentTenantUID`), tenantUid)
+      // 2. Claim unit & Reset/Initialize Billing Time
+      const unitRef = ref(db, `complexes/${complexId}/units/${unitId}`);
+      const updates = {};
+      updates['currentTenantUID'] = tenantUid;
 
-      // 3. Setup Real-time Listener (onValue)
+      // If unit was reset (no UID) or has no time, start the clock fresh
+      if (!unit.currentTenantUID || !unit.billingTime) {
+        updates['billingTime'] = serverTimestamp();
+      }
+
+      await update(unitRef, updates);
+
+      // 3. Setup Real-time Listener
       const complexRef = ref(db, `complexes/${complexId}`)
       const unsubscribe = onValue(complexRef, (snapshot) => {
         if (snapshot.exists()) {
@@ -86,7 +101,6 @@ export const useTenantStore = create((set, get) => ({
           const updatedUnit = updatedComplex.units?.[unitId]
 
           if (updatedUnit) {
-            // Helper to find the most recent bill
             const getRecentBillFromList = (bills) => {
               const list = Object.values(bills || {}).filter(b => b.amount > 0)
               if (list.length === 0) return null
@@ -95,9 +109,9 @@ export const useTenantStore = create((set, get) => ({
 
             const unitBills = updatedUnit.bills ?? {}
             const complexBills = updatedComplex.bills ?? {}
-            
-            let recent = getRecentBillFromList(unitBills) || 
-                         getRecentBillFromList(Object.values(complexBills).filter(b => !b.unitId || b.unitId === unitId))
+
+            let recent = getRecentBillFromList(unitBills) ||
+              getRecentBillFromList(Object.values(complexBills).filter(b => !b.unitId || b.unitId === unitId))
 
             if (!recent && updatedUnit.monthlyRent) {
               recent = {
@@ -137,7 +151,7 @@ export const useTenantStore = create((set, get) => ({
   clearTenantAccess: () => {
     const { unsubscribeComplex } = get()
     if (unsubscribeComplex) unsubscribeComplex()
-    
+
     set({
       accessCode: '',
       complexId: null,

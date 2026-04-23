@@ -10,6 +10,17 @@ function TenantHome() {
     const { fullName } = useAuth()
     const { hasUnitAccess, unit, complex, recentBill } = useTenantStore()
     const [isModalOpen, setIsModalOpen] = useState(!hasUnitAccess)
+    const { logout } = useAuth();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            resetStore(); // Clear the Zustand state immediately
+        } catch (error) {
+            console.error("Failed to logout:", error);
+        }
+    };
+
 
     useEffect(() => {
         if (!hasUnitAccess) {
@@ -27,6 +38,8 @@ function TenantHome() {
                     complex={complex}
                     recentBill={recentBill}
                     hasUnitAccess={hasUnitAccess}
+                    onLogout={handleLogout}
+                    onShowAccessModal={() => setIsModalOpen(true)}
                 />
                 <ActionButtons />
                 <RecentBills />

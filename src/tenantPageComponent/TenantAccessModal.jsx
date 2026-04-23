@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react' // Added useEffect
 import { X, Key } from 'lucide-react'
 import { useTenantStore } from '../contexts/tenantStore'
 import { useAuth } from '../contexts/AuthContext'
@@ -8,12 +8,22 @@ export default function TenantAccessModal({ isOpen, onClose }) {
     const { fetchUnitByAccessCode, loading, error } = useTenantStore()
     const { uid } = useAuth()
 
+    // --- NEW: Load stored code when modal opens ---
+    useEffect(() => {
+        if (isOpen) {
+            const savedCode = localStorage.getItem('last_access_code')
+            if (savedCode) setCode(savedCode)
+        }
+    }, [isOpen])
+
     if (!isOpen) return null
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         const result = await fetchUnitByAccessCode(code, uid)
         if (result.success) {
+            // --- NEW: Save code to storage on success ---
+            localStorage.setItem('last_access_code', code)
             onClose()
         }
     }

@@ -154,7 +154,7 @@ export default function AddProperty({ isOpen, onClose }) {
           currentAccessCodeId: accessCode,
           accessCode: accessCode,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          billingTime: null,
           tenancies: {}
         }
 
