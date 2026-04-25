@@ -62,13 +62,14 @@ export default function TenantCard({ tenantData }) {
         const rawPhone = details.user.phone || "";
 
         // 2. Remove +, spaces, and dashes (WhatsApp wa.me needs digits only)
-        const cleanPhone = rawPhone.replace(/\D/g, '');
+        // This removes all non-digits, then replaces a leading '123' with '0'
+        const cleanPhone = rawPhone.replace(/\D/g, '').replace(/^123/, '0');
 
         // 3. Create the message
         const msg = `Hi ${details.user.fullName}, this is a reminder for your rent at ${details.complexName} (Unit ${details.unitNumber}). Current balance: ₦${Number(details.balance).toLocaleString()}.`;
 
         // 4. Open the link
-        if (cleanPhone) {
+        if (rawPhone) {
             window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
         } else {
             alert("No phone number available for this tenant.");
