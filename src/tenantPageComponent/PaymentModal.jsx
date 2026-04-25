@@ -3,6 +3,7 @@ import { X, CreditCard, DollarSign, Calendar, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useTenantStore } from '../contexts/tenantStore'
 import { db } from '../../firebase.config'
+import PayStack from './paystack'
 import { ref, push, set, update as updateDB, increment } from 'firebase/database'
 
 function PaymentModal({ isOpen, onClose, bills, onPaymentComplete }) {
@@ -50,9 +51,127 @@ function PaymentModal({ isOpen, onClose, bills, onPaymentComplete }) {
         }
     }
 
-    const handlePayment = async () => {
-    if (billsArray.length === 0 || !user || !unit || !complex) return;
+    // const handlePayment = async () => {
 
+
+
+    //     if (billsArray.length === 0 || !user || !unit || !complex) return;
+
+    //     const amount = parseFloat(paymentAmount);
+    //     const landlordId = complex.landlordUID || complex.ownerId;
+
+    //     if (isNaN(amount) || amount <= 0 || amount > (totalDue + 0.01)) {
+    //         setError('Please enter a valid payment amount');
+    //         return;
+    //     }
+
+    //     setLoading(true);
+    //     setError('');
+
+    //     <PayStack
+    //         rentAmount={amount}
+    //         tenantEmail={user.email}
+    //         landlordSubaccount={landlordId ? `sub_${landlordId}` : null}
+    //     />
+
+    //     try {
+    //         let remaining = amount;
+
+    //         const billsPaid = billsArray.map(b => ({
+    //             id: b.id,
+    //             originalTotal: parseFloat(b.current || 0), // Store original to calculate status
+    //             amountPaid: 0,
+    //             isRent: b.description?.toLowerCase().includes('rent') || b.id === 'rent'
+    //         }));
+
+    //         const updatedBills = [...billsArray];
+    //         for (let i = 0; i < updatedBills.length && remaining > 0; i++) {
+    //             const bill = updatedBills[i];
+    //             const billVal = parseFloat(bill.current || 0);
+    //             const pay = Math.min(remaining, billVal);
+
+    //             billsPaid[i].amountPaid = pay;
+    //             remaining -= pay;
+    //             bill.current = billVal - pay;
+    //         }
+
+    //         const transactionRef = push(ref(db, 'transactions'));
+    //         const transactionId = transactionRef.key;
+
+    //         // --- NEW LOGIC: Calculate detailed status ---
+    //         const rentBill = billsPaid.find(b => b.isRent);
+    //         let dynamicStatus = 'completed'; // Default
+    //         let rentBalanceRemaining = 0;
+
+    //         if (rentBill && rentBill.amountPaid > 0) {
+    //             rentBalanceRemaining = rentBill.originalTotal - rentBill.amountPaid;
+    //             if (rentBalanceRemaining <= 0) {
+    //                 dynamicStatus = 'Completed';
+    //             } else {
+    //                 dynamicStatus = `₦${rentBalanceRemaining.toLocaleString()} Left`;
+    //             }
+    //         }
+
+    //         const transaction = {
+    //             id: transactionId,
+    //             tenantId: user.uid,
+    //             landlordId: landlordId,
+    //             unitId: unitId,
+    //             complexId: complex.id,
+    //             amount: amount,
+    //             type: rentBill && rentBill.amountPaid > 0 ? "Rent" : "Bills",
+    //             description: `Payment for ${rentBill && rentBill.amountPaid > 0 ? "Rent" : "Bills"}`,
+    //             billsPaid,
+    //             timestamp: Date.now(),
+    //             status: dynamicStatus, // This now holds the balance info
+    //             rentBalance: rentBalanceRemaining // Optional: save explicitly for easy access
+    //         };
+
+    //         const updates = {};
+    //         updates[`transactions/${transactionId}`] = transaction;
+    //         updates[`users/${user.uid}/transactions/${transactionId}`] = true;
+
+    //         if (landlordId) {
+    //             updates[`users/${landlordId}/transactions/${transactionId}`] = true;
+    //         }
+
+    //         for (let i = 0; i < updatedBills.length; i++) {
+    //             const bill = updatedBills[i];
+    //             const paymentApplied = billsPaid[i].amountPaid;
+    //             if (paymentApplied <= 0) continue;
+
+    //             const billPath = unit.bills?.[bill.id]
+    //                 ? `complexes/${complex.id}/units/${unitId}/bills/${bill.id}`
+    //                 : `complexes/${complex.id}/bills/${bill.id}`;
+
+    //             updates[`${billPath}/current`] = bill.current;
+    //             if (bill.current <= 0) updates[`${billPath}/paid`] = true;
+
+    //             const statsPath = `complexes/${complex.id}/stats/${bill.id}`;
+    //             updates[`${statsPath}/totalPaid`] = increment(paymentApplied);
+    //             updates[`${statsPath}/unpaid`] = increment(-paymentApplied);
+    //             updates[`${statsPath}/lastUpdated`] = Date.now();
+
+    //             if (billsPaid[i].isRent) {
+    //                 updates[`complexes/${complex.id}/units/${unitId}/rentBalance`] = bill.current;
+    //             }
+    //         }
+
+    //         await updateDB(ref(db), updates);
+    //         onPaymentComplete?.(transaction);
+    //         onClose();
+    //     } catch (err) {
+    //         console.error('Payment error:', err);
+    //         setError(err.message || 'Payment failed.');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    const handlePayment = async () => {
+    // 1. Validations & Setup
+    if (billsArray.length === 0 || !user || !unit || !complex) return;
+    
     const amount = parseFloat(paymentAmount);
     const landlordId = complex.landlordUID || complex.ownerId;
 
@@ -61,102 +180,120 @@ function PaymentModal({ isOpen, onClose, bills, onPaymentComplete }) {
         return;
     }
 
-    setLoading(true);
-    setError('');
-
-    try {
-        let remaining = amount;
-        
-        const billsPaid = billsArray.map(b => ({
-            id: b.id,
-            originalTotal: parseFloat(b.current || 0), // Store original to calculate status
-            amountPaid: 0,
-            isRent: b.description?.toLowerCase().includes('rent') || b.id === 'rent'
-        }));
-
-        const updatedBills = [...billsArray];
-        for (let i = 0; i < updatedBills.length && remaining > 0; i++) {
-            const bill = updatedBills[i];
-            const billVal = parseFloat(bill.current || 0);
-            const pay = Math.min(remaining, billVal);
-            
-            billsPaid[i].amountPaid = pay;
-            remaining -= pay;
-            bill.current = billVal - pay;
-        }
-
-        const transactionRef = push(ref(db, 'transactions'));
-        const transactionId = transactionRef.key;
-
-        // --- NEW LOGIC: Calculate detailed status ---
-        const rentBill = billsPaid.find(b => b.isRent);
-        let dynamicStatus = 'completed'; // Default
-        let rentBalanceRemaining = 0;
-
-        if (rentBill && rentBill.amountPaid > 0) {
-            rentBalanceRemaining = rentBill.originalTotal - rentBill.amountPaid;
-            if (rentBalanceRemaining <= 0) {
-                dynamicStatus = 'Completed';
-            } else {
-                dynamicStatus = `₦${rentBalanceRemaining.toLocaleString()} Left`;
-            }
-        }
-
-        const transaction = {
-            id: transactionId,
-            tenantId: user.uid,
-            landlordId: landlordId,
-            unitId: unitId,
-            complexId: complex.id,
-            amount: amount,
-            type: rentBill && rentBill.amountPaid > 0 ? "Rent" : "Bills",
-            description: `Payment for ${rentBill && rentBill.amountPaid > 0 ? "Rent" : "Bills"}`,
-            billsPaid,
-            timestamp: Date.now(),
-            status: dynamicStatus, // This now holds the balance info
-            rentBalance: rentBalanceRemaining // Optional: save explicitly for easy access
-        };
-
-        const updates = {};
-        updates[`transactions/${transactionId}`] = transaction;
-        updates[`users/${user.uid}/transactions/${transactionId}`] = true;
-
-        if (landlordId) {
-            updates[`users/${landlordId}/transactions/${transactionId}`] = true;
-        }
-
-        for (let i = 0; i < updatedBills.length; i++) {
-            const bill = updatedBills[i];
-            const paymentApplied = billsPaid[i].amountPaid;
-            if (paymentApplied <= 0) continue;
-
-            const billPath = unit.bills?.[bill.id]
-                ? `complexes/${complex.id}/units/${unitId}/bills/${bill.id}`
-                : `complexes/${complex.id}/bills/${bill.id}`;
-
-            updates[`${billPath}/current`] = bill.current;
-            if (bill.current <= 0) updates[`${billPath}/paid`] = true;
-
-            const statsPath = `complexes/${complex.id}/stats/${bill.id}`;
-            updates[`${statsPath}/totalPaid`] = increment(paymentApplied);
-            updates[`${statsPath}/unpaid`] = increment(-paymentApplied);
-            updates[`${statsPath}/lastUpdated`] = Date.now();
-
-            if (billsPaid[i].isRent) {
-                updates[`complexes/${complex.id}/units/${unitId}/rentBalance`] = bill.current;
-            }
-        }
-
-        await updateDB(ref(db), updates);
-        onPaymentComplete?.(transaction);
-        onClose();
-    } catch (err) {
-        console.error('Payment error:', err);
-        setError(err.message || 'Payment failed.');
-    } finally {
-        setLoading(false);
+    // 2. Initialize Paystack Popup
+    if (!window.PaystackPop) {
+        setError("Paystack is loading... please check your internet connection.");
+        return;
     }
+
+    const handler = window.PaystackPop.setup({
+        key: 'pk_test_7db487090a5d1c3c229168fe56ef78687d73241b',
+        email: user.email,
+        amount: (amount + 100) * 100, // Total + ₦100 fee in Kobo
+        subaccount: "ACCT_qo5lifxigeyg04m",
+        bearer: 'subaccount',
+        currency: 'NGN',
+        reference: `PAYHAUS_${Date.now()}`,
+        callback: async (response) => {
+            // --- THIS RUNS ONLY AFTER SUCCESSFUL PAYMENT ---
+            setLoading(true);
+            setError('');
+
+            try {
+                let remaining = amount;
+                const billsPaid = billsArray.map(b => ({
+                    id: b.id,
+                    originalTotal: parseFloat(b.current || 0),
+                    amountPaid: 0,
+                    isRent: b.description?.toLowerCase().includes('rent') || b.id === 'rent'
+                }));
+
+                const updatedBills = [...billsArray];
+                for (let i = 0; i < updatedBills.length && remaining > 0; i++) {
+                    const bill = updatedBills[i];
+                    const billVal = parseFloat(bill.current || 0);
+                    const pay = Math.min(remaining, billVal);
+
+                    billsPaid[i].amountPaid = pay;
+                    remaining -= pay;
+                    bill.current = billVal - pay;
+                }
+
+                const transactionRef = push(ref(db, 'transactions'));
+                const transactionId = transactionRef.key;
+
+                const rentBill = billsPaid.find(b => b.isRent);
+                let dynamicStatus = 'completed';
+                let rentBalanceRemaining = 0;
+
+                if (rentBill && rentBill.amountPaid > 0) {
+                    rentBalanceRemaining = rentBill.originalTotal - rentBill.amountPaid;
+                    dynamicStatus = rentBalanceRemaining <= 0 ? 'Completed' : `₦${rentBalanceRemaining.toLocaleString()} Left`;
+                }
+
+                const transaction = {
+                    id: transactionId,
+                    tenantId: user.uid,
+                    landlordId: landlordId,
+                    unitId: unitId,
+                    complexId: complex.id,
+                    amount: amount,
+                    paystackRef: response.reference, // Store the Paystack reference for safety
+                    type: rentBill && rentBill.amountPaid > 0 ? "Rent" : "Bills",
+                    description: `Payment for ${rentBill && rentBill.amountPaid > 0 ? "Rent" : "Bills"}`,
+                    billsPaid,
+                    timestamp: Date.now(),
+                    status: dynamicStatus,
+                    rentBalance: rentBalanceRemaining
+                };
+
+                const updates = {};
+                updates[`transactions/${transactionId}`] = transaction;
+                updates[`users/${user.uid}/transactions/${transactionId}`] = true;
+                if (landlordId) updates[`users/${landlordId}/transactions/${transactionId}`] = true;
+
+                for (let i = 0; i < updatedBills.length; i++) {
+                    const bill = updatedBills[i];
+                    const paymentApplied = billsPaid[i].amountPaid;
+                    if (paymentApplied <= 0) continue;
+
+                    const billPath = unit.bills?.[bill.id]
+                        ? `complexes/${complex.id}/units/${unitId}/bills/${bill.id}`
+                        : `complexes/${complex.id}/bills/${bill.id}`;
+
+                    updates[`${billPath}/current`] = bill.current;
+                    if (bill.current <= 0) updates[`${billPath}/paid`] = true;
+
+                    const statsPath = `complexes/${complex.id}/stats/${bill.id}`;
+                    updates[`${statsPath}/totalPaid`] = increment(paymentApplied);
+                    updates[`${statsPath}/unpaid`] = increment(-paymentApplied);
+                    updates[`${statsPath}/lastUpdated`] = Date.now();
+
+                    if (billsPaid[i].isRent) {
+                        updates[`complexes/${complex.id}/units/${unitId}/rentBalance`] = bill.current;
+                    }
+                }
+
+                await updateDB(ref(db), updates);
+                onPaymentComplete?.(transaction);
+                onClose();
+            } catch (err) {
+                console.error('Database update error:', err);
+                setError('Payment successful, but failed to update records. Please contact support.');
+            } finally {
+                setLoading(false);
+            }
+        },
+        onClose: () => {
+            setLoading(false);
+            console.log("User closed the payment window.");
+        }
+    });
+
+    handler.openIframe();
 };
+
+
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

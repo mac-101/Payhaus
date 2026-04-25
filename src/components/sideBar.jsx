@@ -115,7 +115,7 @@ export default function SideBar() {
 
                     {/* Bottom Section */}
                     <div className="border-t border-gray-200 pt-4 space-y-1">
-                        <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        <button onClick={() => navigate('/settings')} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                             <Settings size={18} className="text-gray-400" />
                             <span>Settings</span>
                         </button>
