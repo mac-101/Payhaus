@@ -19,23 +19,25 @@ import TenantTransactionsPage from "./tenantPage/transaction.jsx"
 function AppContent() {
   const { role, loading, user } = useAuth();
 
-  // 1. PUBLIC ROUTES (Always accessible, no loader)
-  if (window.location.pathname === "/auth") return <PayhausAuth />;
-  if (window.location.pathname === "/landing") return <Landing />;
-
-  // 2. LOADING STATE (Only for the dashboard)
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader size={24} className="text-blue-600 animate-spin" />
-      </div>
-    );
-  }
-
-  // 3. MAIN ROUTING
   return (
     <Routes>
-      <Route element={<AppRoutes />}>
+      {/* 1. PUBLIC ROUTES - These render immediately */}
+      <Route path="/auth" element={<PayhausAuth />} />
+      <Route path="/landing" element={<Landing />} />
+
+      {/* 2. PROTECTED ROUTES */}
+      <Route
+        element={
+          // Show loader only when trying to access protected content
+          loading ? (
+            <div className="flex items-center justify-center min-h-screen">
+              <Loader size={24} className="text-blue-600 animate-spin" />
+            </div>
+          ) : (
+            <AppRoutes />
+          )
+        }
+      >
         {role === 'tenant' ? (
           <>
             <Route path="/" element={<TenantHome />} />
@@ -43,22 +45,31 @@ function AppContent() {
             <Route path="/transactions" element={<TenantTransactionsPage />} />
           </>
         ) : (
-          /* Landlord Routes */
-          <Route path="/" element={<AppLayout />}>
-            <Route index element={<Home />} />
-            <Route path="property" element={<Property />} />
-            <Route path="people" element={<TenantPage />} />
-            <Route path="transactions" element={<Transactions />} />
-            <Route path="settings" element={<LandlordAccountPage />} />
-          </Route>
+          <Route path="/*" element={
+            <AppLayout>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/property" element={<Property />} />
+                <Route path="/people" element={<TenantPage />} />
+                <Route path="/transactions" element={<Transactions />} />
+                <Route path="/settings" element={<LandlordAccountPage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </AppLayout>
+          } />
         )}
       </Route>
 
-      {/* CATCH-ALL */}
-      <Route path="*" element={<Navigate to={user ? "/" : "/auth"} replace />} />
+      {/* 3. GLOBAL CATCH-ALL */}
+      <Route 
+        path="*" 
+        element={loading ? null : <Navigate to={user ? "/" : "/auth"} replace />} 
+      />
     </Routes>
   );
 }
+
+
 
 
 
